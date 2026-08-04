@@ -10,19 +10,47 @@ import Speech
 struct Transcribe {
     static var verbose = false
 
+    static let usage = """
+    usage: transcribe [-v] <audio-file> [locale]
+
+    Transcribe an audio file to text using on-device speech recognition.
+
+    arguments:
+      <audio-file>   path to the audio file to transcribe
+      [locale]       BCP-47 locale identifier (default: en-US)
+
+    options:
+      -v, --verbose  print diagnostics to stderr
+      -h, --help     show this message
+
+    environment:
+      TRANSCRIBE_OUT  if set, the transcript is also written to this path
+
+    """
+
+    static func usageError(_ msg: String) -> Never {
+        FileHandle.standardError.write(Data("error: \(msg)\n\n\(usage)".utf8))
+        exit(2)
+    }
+
     static func main() async {
         var args = Array(CommandLine.arguments.dropFirst())
+        if args.contains("-h") || args.contains("--help") {
+            print(usage, terminator: "")
+            exit(0)
+        }
         if let i = args.firstIndex(of: "-v") ?? args.firstIndex(of: "--verbose") {
             verbose = true
             args.remove(at: i)
         }
+        if let bad = args.first(where: { $0.hasPrefix("-") && $0 != "-" }) {
+            usageError("unknown option: \(bad)")
+        }
         // Allow output redirection to a file via TRANSCRIBE_OUT (useful when
         // launched as an .app bundle where stdout is not a terminal).
         let outPath = ProcessInfo.processInfo.environment["TRANSCRIBE_OUT"]
-        guard args.count >= 1 else {
-            FileHandle.standardError.write(Data("usage: transcribe [-v] <audio-file> [locale]\n".utf8))
-            exit(2)
-        }
+        guard args.count >= 1 else { usageError("missing <audio-file>") }
+        guard args.count <= 2 else { usageError("too many arguments") }
 
         let url = URL(fileURLWithPath: args[0])
         let localeID = args.count >= 2 ? args[1] : "en-US"
