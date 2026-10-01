@@ -15,7 +15,23 @@ A small command-line transcription tool built on Apple's new
 
 `brew install llimllib/tap/transcribe`
 
-## Performance
+## Quality
+
+Apple's transcription quality comes in somewhere between whisper-large and whisper-tiny models:
+
+```
+tool                            WER  sub  del  ins
+cpp-large-v3-turbo             3.0%   13    2    7
+mlx-large-v3-turbo             3.2%   14    3    6
+transcribe                     7.5%   37   13    4
+cpp-tiny                      20.2%   93   42   11
+mlx-tiny                      26.1%  128   34   27
+npr                          138.3%    5   44  951
+```
+
+You can see example outputs in the `quality` folder, and the comparison script
+
+## Speeed
 
 On my computer, `transcript` is about equal to `mlx_whisper` and slightly slower than `whisper.cpp` when using `tiny` models. It's about 4x faster when using `large-v3-turbo` models:
 
