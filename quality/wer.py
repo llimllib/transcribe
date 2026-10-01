@@ -73,10 +73,11 @@ def main() -> None:
         (*score(ref, normalize(p.read_text()), args.excerpt), p.stem) for p in hyps
     )
 
-    print(f"reference: {args.reference} ({len(ref.split())} words)\n")
-    print(f"{'tool':<28} {'WER':>6} {'sub':>4} {'del':>4} {'ins':>4}")
+    print(f"Reference: `{args.reference}` ({len(ref.split())} words)\n")
+    print("| tool | WER | substitutions | deletions | insertions |")
+    print("|---|--:|--:|--:|--:|")
     for wer, sub, dele, ins, name in rows:
-        print(f"{name:<28} {wer:>6.1%} {sub:>4} {dele:>4} {ins:>4}")
+        print(f"| {name} | {wer:.1%} | {sub} | {dele} | {ins} |")
 
 
 if __name__ == "__main__":

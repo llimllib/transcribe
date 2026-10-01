@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Speed benchmark: Apple SpeechTranscriber (./transcribe) vs. mlx_whisper and
-# whisper.cpp, each with a tiny and a large model.
+# Speed benchmark: Apple SpeechTranscriber (transcribe) vs. mlx_whisper and
+# whisper.cpp, each with a tiny and a large model, and NVIDIA's Parakeet via
+# parakeet-mlx.
 #
 # usage: ./benchmark.sh [audio-file]   (default: mlk.wav)
 set -euo pipefail
@@ -15,9 +16,13 @@ trap 'rm -rf "$OUT_DIR"' EXIT
 # whisper.cpp ggml file name -> mlx-community repo name
 TINY=tiny
 LARGE=large-v3-turbo
+# English-only Parakeet; v3 is the multilingual version
+PARAKEET=mlx-community/parakeet-tdt-0.6b-v2
 
 echo "==> installing tools"
-python3 -m pip install --quiet mlx-whisper
+python3 -m pip install --quiet mlx-whisper parakeet-mlx
+# parakeet-mlx decodes audio with ffmpeg
+brew list ffmpeg &>/dev/null || brew install ffmpeg
 brew list whisper.cpp &>/dev/null || brew install whisper.cpp
 brew list hyperfine &>/dev/null || brew install hyperfine
 brew list llimllib/tap/transcribe &>/dev/null || brew install llimllib/tap/transcribe
@@ -33,9 +38,12 @@ for m in "$TINY" "$LARGE"; do
     fi
     python3 -c "from huggingface_hub import snapshot_download; snapshot_download('mlx-community/whisper-$m')"
 done
+python3 -c "from huggingface_hub import snapshot_download; snapshot_download('$PARAKEET')"
 
+# --condition-on-previous-text False stops whisper getting stuck repeating a
+# phrase on long audio
 mlx() {
-    echo "mlx_whisper --model mlx-community/whisper-$1 --verbose False -o '$OUT_DIR' '$AUDIO'"
+    echo "mlx_whisper --model mlx-community/whisper-$1 --verbose False --condition-on-previous-text False -o '$OUT_DIR' '$AUDIO'"
 }
 cpp() {
     echo "whisper-cli -np -m '$MODELS_DIR/ggml-$1.bin' -f '$AUDIO'"
@@ -48,4 +56,6 @@ hyperfine --warmup 1 \
     -n "mlx_whisper $TINY" "$(mlx "$TINY")" \
     -n "mlx_whisper $LARGE" "$(mlx "$LARGE")" \
     -n "whisper.cpp $TINY" "$(cpp "$TINY")" \
-    -n "whisper.cpp $LARGE" "$(cpp "$LARGE")"
+    -n "whisper.cpp $LARGE" "$(cpp "$LARGE")" \
+    -n "parakeet-mlx ${PARAKEET#*/}" \
+    "parakeet-mlx --model $PARAKEET --output-format txt --output-dir '$OUT_DIR' '$AUDIO'"
