@@ -1,0 +1,120 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and release
+    # SpeechAnalyzer/SpeechTranscriber need the macOS 26 SDK (Xcode 26), and
+    # the macos-26 runner is Apple Silicon, which is the only target we ship.
+    runs-on: macos-26
+    env:
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swiftc --version
+
+      - name: Build
+        run: make
+
+      - name: Smoke test
+        run: |
+          file transcribe
+          ./transcribe --help
+
+      - name: Package
+        id: package
+        run: |
+          version="${TAG#v}"
+          archive="transcribe-${TAG}-darwin-arm64.tar.gz"
+          tar -czf "$archive" transcribe README.md
+          shasum -a 256 "$archive" > checksums.txt
+          cat checksums.txt
+          {
+            echo "version=$version"
+            echo "archive=$archive"
+            echo "sha256=$(shasum -a 256 "$archive" | cut -d' ' -f1)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ARCHIVE: ${{ steps.package.outputs.archive }}
+        run: |
+          cat > notes.md <<EOF
+          ## transcribe ${TAG}
+
+          On-device audio transcription using Apple's SpeechAnalyzer APIs.
+          Requires macOS 26+ on Apple Silicon.
+
+          ### Installation
+
+          \`\`\`bash
+          brew install llimllib/tap/transcribe
+
+          # Or download the binary from below
+          \`\`\`
+          EOF
+
+          prerelease=""
+          if [[ "$TAG" == *-* ]]; then prerelease="--prerelease"; fi
+
+          gh release create "$TAG" "$ARCHIVE" checksums.txt \
+            --title "$TAG" \
+            --notes-file notes.md \
+            --generate-notes \
+            $prerelease
+
+      - name: Check out homebrew tap
+        uses: actions/checkout@v7
+        with:
+          repository: llimllib/homebrew-tap
+          ref: main
+          token: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+          path: homebrew-tap
+
+      - name: Update formula
+        env:
+          VERSION: ${{ steps.package.outputs.version }}
+          ARCHIVE: ${{ steps.package.outputs.archive }}
+          SHA256: ${{ steps.package.outputs.sha256 }}
+        working-directory: homebrew-tap
+        run: |
+          mkdir -p Formula
+          cat > Formula/transcribe.rb <<EOF
+          class Transcribe < Formula
+            desc "On-device audio transcription using Apple's SpeechAnalyzer"
+            homepage "https://github.com/llimllib/transcribe"
+            url "https://github.com/llimllib/transcribe/releases/download/${TAG}/${ARCHIVE}"
+            version "${VERSION}"
+            sha256 "${SHA256}"
+
+            depends_on arch: :arm64
+            depends_on macos: :tahoe
+
+            def install
+              bin.install "transcribe"
+            end
+
+            test do
+              assert_match "usage: transcribe", shell_output("#{bin}/transcribe --help")
+            end
+          end
+          EOF
+          cat Formula/transcribe.rb
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/transcribe.rb
+          git commit -m "Brew formula update for transcribe version ${TAG}"
+          git push origin main
