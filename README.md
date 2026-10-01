@@ -7,8 +7,8 @@ A small command-line transcription tool built on Apple's new
 ## Requirements
 
 - macOS 26 or later
-- On-device dictation model installed (see [Troubleshooting](#troubleshooting) if missing)
-- `ffmpeg` **only** for opus/ogg files (see Audio formats below)
+- On-device dictation model installed (see [troubleshooting](#troubleshooting) if missing)
+- `ffmpeg` **only** for opus/ogg files (see [audio formats](#audio-formats) below)
 
 ## Install
 
