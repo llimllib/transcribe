@@ -1,3 +1,5 @@
 *.opus
 *.wav
 transcribe
+models/
+benchmark.md
