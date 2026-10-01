@@ -47,7 +47,7 @@ WER means "word error rate"
 
 You can see example outputs in the `quality` folder, and the comparison script
 
-## Speeed
+## Speed
 
 On my computer, `transcript` is about equal to `mlx_whisper` and slightly slower than `whisper.cpp` when using `tiny` models. It's about 4x faster when using `large-v3-turbo` models:
 
