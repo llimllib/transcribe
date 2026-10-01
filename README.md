@@ -7,27 +7,43 @@ A small command-line transcription tool built on Apple's new
 ## Requirements
 
 - macOS 26 or later
-- A Swift 6 toolchain (`swiftc`)
-- On-device dictation model installed (see Troubleshooting if missing)
+- On-device dictation model installed (see [Troubleshooting](#troubleshooting) if missing)
 - `ffmpeg` **only** for opus/ogg files (see Audio formats below)
 
 ## Install
 
 `brew install llimllib/tap/transcribe`
 
+## Usage
+
+```sh
+transcribe [-v] <audio-file> [locale]
+```
+
+- `-v` / `--verbose` prints diagnostics to stderr.
+- `locale` defaults to `en-US`.
+
+Examples:
+
+```sh
+transcribe recording.wav
+transcribe -v speech.m4a en-US
+```
+
 ## Quality
 
 Apple's transcription quality comes in somewhere between whisper-large and whisper-tiny models:
 
-```
-tool                            WER  sub  del  ins
-cpp-large-v3-turbo             3.0%   13    2    7
-mlx-large-v3-turbo             3.2%   14    3    6
-transcribe                     7.5%   37   13    4
-cpp-tiny                      20.2%   93   42   11
-mlx-tiny                      26.1%  128   34   27
-npr                          138.3%    5   44  951
-```
+| tool                       |    WER | substitutions | deletions | insertions |
+| -------------------------- | -----: | ------------: | --------: | ---------: |
+| whisper-cpp-large-v3-turbo |   3.0% |            13 |         2 |          7 |
+| mlx-large-v3-turbo         |   3.2% |            14 |         3 |          6 |
+| transcribe                 |   7.5% |            37 |        13 |          4 |
+| whisper-cpp-tiny           |  20.2% |            93 |        42 |         11 |
+| mlx-tiny                   |  26.1% |           128 |        34 |         27 |
+| npr                        | 138.3% |             5 |        44 |        951 |
+
+WER means "word error rate"
 
 You can see example outputs in the `quality` folder, and the comparison script
 
@@ -68,26 +84,11 @@ Run `benchmark.sh` to reproduce on your own machine
 
 ## Build
 
+requires a swift compilation toolchain
+
 ```sh
 make            # produces ./transcribe
 make install    # installs to /usr/local/bin (override with PREFIX=...)
-```
-
-## Usage
-
-```sh
-transcribe [-v] <audio-file> [locale]
-```
-
-- `-v` / `--verbose` prints diagnostics to stderr.
-- `locale` defaults to `en-US`.
-
-Examples:
-
-```sh
-transcribe recording.wav
-transcribe -v speech.m4a en-US
-make run FILE=speech.wav LOCALE=en-US V=1
 ```
 
 ## Audio formats
