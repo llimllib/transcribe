@@ -32,15 +32,16 @@ transcribe -v speech.m4a en-US
 
 ## Quality
 
-Apple's transcription quality comes in somewhere between whisper-large and whisper-tiny models:
+Apple's transcription quality on my sample file (an abridged recording of the "I Have a Dream" speech) comes in somewhere between whisper-large and whisper-tiny models, and very similar to the parakeet model:
 
-| tool                       |   WER | substitutions | deletions | insertions |
-| -------------------------- | ----: | ------------: | --------: | ---------: |
-| whisper-cpp-large-v3-turbo |  3.0% |            13 |         2 |          7 |
-| mlx-large-v3-turbo         |  3.2% |            14 |         3 |          6 |
-| transcribe                 |  7.5% |            37 |        13 |          4 |
-| whisper-cpp-tiny           | 20.2% |            93 |        42 |         11 |
-| mlx-tiny                   | 26.1% |           128 |        34 |         27 |
+| tool               |   WER | substitutions | deletions | insertions |
+| ------------------ | ----: | ------------: | --------: | ---------: |
+| cpp-large-v3-turbo |  3.0% |            13 |         2 |          7 |
+| mlx-large-v3-turbo |  3.2% |            14 |         3 |          6 |
+| parakeet-v2        |  6.1% |            15 |        21 |          8 |
+| transcribe         |  7.5% |            37 |        13 |          4 |
+| cpp-tiny           | 20.2% |            93 |        42 |         11 |
+| mlx-tiny           | 26.1% |           128 |        34 |         27 |
 
 WER means "word error rate"
 
@@ -52,31 +53,36 @@ On my computer, `transcript` is about equal to `mlx_whisper` and slightly slower
 
 ```
 Benchmark 1: apple transcribe
-  Time (mean ± σ):      3.928 s ±  0.110 s    [User: 0.158 s, System: 0.038 s]
-  Range (min … max):    3.782 s …  4.086 s    10 runs
+  Time (mean ± σ):      3.916 s ±  0.072 s    [User: 0.158 s, System: 0.039 s]
+  Range (min … max):    3.838 s …  4.071 s    10 runs
 
 Benchmark 2: mlx_whisper tiny
-  Time (mean ± σ):      3.850 s ±  0.058 s    [User: 2.104 s, System: 0.648 s]
-  Range (min … max):    3.762 s …  3.972 s    10 runs
+  Time (mean ± σ):      2.402 s ±  0.068 s    [User: 1.420 s, System: 0.452 s]
+  Range (min … max):    2.293 s …  2.475 s    10 runs
 
 Benchmark 3: mlx_whisper large-v3-turbo
-  Time (mean ± σ):     13.976 s ±  0.189 s    [User: 1.804 s, System: 0.986 s]
-  Range (min … max):   13.733 s … 14.365 s    10 runs
+  Time (mean ± σ):     10.305 s ±  0.053 s    [User: 1.708 s, System: 0.907 s]
+  Range (min … max):   10.208 s … 10.398 s    10 runs
 
 Benchmark 4: whisper.cpp tiny
-  Time (mean ± σ):      2.750 s ±  0.023 s    [User: 2.729 s, System: 0.334 s]
-  Range (min … max):    2.711 s …  2.798 s    10 runs
+  Time (mean ± σ):      2.808 s ±  0.051 s    [User: 2.733 s, System: 0.319 s]
+  Range (min … max):    2.706 s …  2.887 s    10 runs
 
 Benchmark 5: whisper.cpp large-v3-turbo
-  Time (mean ± σ):     13.594 s ±  0.199 s    [User: 2.967 s, System: 0.667 s]
-  Range (min … max):   13.303 s … 13.921 s    10 runs
+  Time (mean ± σ):     13.666 s ±  0.213 s    [User: 3.008 s, System: 0.732 s]
+  Range (min … max):   13.461 s … 14.183 s    10 runs
+
+Benchmark 6: parakeet-mlx parakeet-tdt-0.6b-v2
+  Time (mean ± σ):      4.833 s ±  0.252 s    [User: 0.936 s, System: 1.299 s]
+  Range (min … max):    4.546 s …  5.438 s    10 runs
 
 Summary
-  whisper.cpp tiny ran
-    1.40 ± 0.02 times faster than mlx_whisper tiny
-    1.43 ± 0.04 times faster than apple transcribe
-    4.94 ± 0.08 times faster than whisper.cpp large-v3-turbo
-    5.08 ± 0.08 times faster than mlx_whisper large-v3-turbo
+  mlx_whisper tiny ran
+    1.17 ± 0.04 times faster than whisper.cpp tiny
+    1.63 ± 0.06 times faster than apple transcribe
+    2.01 ± 0.12 times faster than parakeet-mlx parakeet-tdt-0.6b-v2
+    4.29 ± 0.12 times faster than mlx_whisper large-v3-turbo
+    5.69 ± 0.18 times faster than whisper.cpp large-v3-turbo
 ```
 
 Run `benchmark.sh` to reproduce on your own machine
