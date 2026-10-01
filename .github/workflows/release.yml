@@ -37,7 +37,7 @@ jobs:
         run: |
           version="${TAG#v}"
           archive="transcribe-${TAG}-darwin-arm64.tar.gz"
-          tar -czf "$archive" transcribe README.md
+          tar -czf "$archive" transcribe README.md LICENSE
           shasum -a 256 "$archive" > checksums.txt
           cat checksums.txt
           {
@@ -98,6 +98,7 @@ jobs:
             url "https://github.com/llimllib/transcribe/releases/download/${TAG}/${ARCHIVE}"
             version "${VERSION}"
             sha256 "${SHA256}"
+            license "MIT"
 
             depends_on arch: :arm64
             depends_on macos: :tahoe
