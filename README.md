@@ -11,6 +11,45 @@ A small command-line transcription tool built on Apple's new
 - On-device dictation model installed (see Troubleshooting if missing)
 - `ffmpeg` **only** for opus/ogg files (see Audio formats below)
 
+## Install
+
+`brew install llimllib/tap/transcribe`
+
+## Performance
+
+On my computer, `transcript` is about equal to `mlx_whisper` and slightly slower than `whisper.cpp` when using `tiny` models. It's about 4x faster when using `large-v3-turbo` models:
+
+```
+Benchmark 1: apple transcribe
+  Time (mean ± σ):      3.928 s ±  0.110 s    [User: 0.158 s, System: 0.038 s]
+  Range (min … max):    3.782 s …  4.086 s    10 runs
+
+Benchmark 2: mlx_whisper tiny
+  Time (mean ± σ):      3.850 s ±  0.058 s    [User: 2.104 s, System: 0.648 s]
+  Range (min … max):    3.762 s …  3.972 s    10 runs
+
+Benchmark 3: mlx_whisper large-v3-turbo
+  Time (mean ± σ):     13.976 s ±  0.189 s    [User: 1.804 s, System: 0.986 s]
+  Range (min … max):   13.733 s … 14.365 s    10 runs
+
+Benchmark 4: whisper.cpp tiny
+  Time (mean ± σ):      2.750 s ±  0.023 s    [User: 2.729 s, System: 0.334 s]
+  Range (min … max):    2.711 s …  2.798 s    10 runs
+
+Benchmark 5: whisper.cpp large-v3-turbo
+  Time (mean ± σ):     13.594 s ±  0.199 s    [User: 2.967 s, System: 0.667 s]
+  Range (min … max):   13.303 s … 13.921 s    10 runs
+
+Summary
+  whisper.cpp tiny ran
+    1.40 ± 0.02 times faster than mlx_whisper tiny
+    1.43 ± 0.04 times faster than apple transcribe
+    4.94 ± 0.08 times faster than whisper.cpp large-v3-turbo
+    5.08 ± 0.08 times faster than mlx_whisper large-v3-turbo
+```
+
+Run `benchmark.sh` to reproduce on your own machine
+
 ## Build
 
 ```sh
@@ -52,7 +91,7 @@ Just pass any of them straight to `transcribe` — no pre-processing needed.
 macOS has **no working decoder** for raw `.opus` / `.ogg` files: neither
 `AVAudioFile`, `afconvert`, nor `AVAsset` can open them (they fail with
 `'fmt?'` / `kAudioFileUnsupportedDataFormatError`). Despite `afconvert
---help-formats` *listing* Ogg as readable, the decoder is not actually wired
+--help-formats` _listing_ Ogg as readable, the decoder is not actually wired
 in.
 
 For these files, transcode with `ffmpeg` first:
